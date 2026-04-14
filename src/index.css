@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Baris sakti buat aktifin Dark Mode berbasis class di v4 */
+@variant dark (&:where(.dark, .dark *));
+
+/* Jika @import tidak jalan, gunakan cara lama (tapi biasanya v4 wajib @import) */
+/* @tailwind base; @tailwind components; @tailwind utilities; */

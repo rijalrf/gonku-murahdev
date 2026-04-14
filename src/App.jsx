@@ -28,19 +28,19 @@ const App = () => {
   // Slider Data
   const slides = [
     {
-      url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800",
+      url: "photo-1.jpg",
       alt: "Analisis Data Bisnis"
     },
     {
-      url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=800",
+      url: "photo-2.jpg",
       alt: "Coding Profesional"
     },
     {
-      url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800",
+      url: "photo-3.jpg",
       alt: "Sistem Keamanan"
     },
     {
-      url: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=800",
+      url: "photo-4.jpg",
       alt: "Kolaborasi Tim Digital"
     }
   ];

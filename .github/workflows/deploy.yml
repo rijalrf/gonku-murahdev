@@ -20,11 +20,11 @@ jobs:
 
       # 3. Build Image
       - name: Build Docker Image
-        run: docker build -t gonku/murahdev:latest .
+        run: docker build -t playdeveloper/gonku.murahdev:latest .
 
       # 4. Push Image
       - name: Push Docker Image
-        run: docker push gonku/murahdev:latest
+        run: docker push playdeveloper/gonku.murahdev:latest
 
       # 5. Deploy ke Server (AUTO PULL + RUN)
       - name: Deploy to Server
@@ -34,7 +34,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker pull gonku/murahdev:latest
+            docker pull playdeveloper/gonku.murahdev:latest
 
             docker stop app || true
             docker rm app || true
@@ -43,4 +43,4 @@ jobs:
               --name app \
               -p 3000:3000 \
               --restart always \
-              gonku/murahdev:latest
+              playdeveloper/gonku.murahdev:latest

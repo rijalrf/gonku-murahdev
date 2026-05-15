@@ -37,9 +37,9 @@ jobs:
       - name: Setup SSH Config Bridge
         run: |
           mkdir -p ~/.ssh
-          echo "Host ${{ secrets.SSH_HOST }}
-            ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CF_CLIENT_ID }} --service-token-secret ${{ secrets.CF_CLIENT_SECRET }}
-            StrictHostKeyChecking no" > ~/.ssh/config
+          echo "Host ${{ secrets.SSH_HOST }}" > ~/.ssh/config
+          echo "ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       # 6. Masuk ke server via SSH Tunnel dan menjalankan perintah deploy [cite: 49, 58]
       - name: Deploy to Server via SSH Tunnel
@@ -54,5 +54,8 @@ jobs:
             # Menghentikan dan menghapus container lama agar tidak bentrok [cite: 73, 74]
             docker stop app || true
             docker rm app || true
-            # Jalankan container baru dengan image versi terbaru
-            docker run -d --name app -p 3000:3000 --restart always ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
+            docker run -d \
+              --name app \
+              -p 3000:3000 \
+              --restart always \
+              ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest

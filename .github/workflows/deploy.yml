@@ -38,7 +38,7 @@ jobs:
           ssh-host:                ${{ secrets.SSH_HOST }}
           ssh-user:                ${{ secrets.SSH_USER }}
 
-      # 4. Eksekusi perintah di server menggunakan SSH bawaan sistem
+      # 4. Eksekusi perintah di server menggunakan SSH bawaan sistem gonku
       - name: Deploy to Server
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'

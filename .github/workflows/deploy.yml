@@ -44,5 +44,5 @@ jobs:
             docker pull ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
             docker stop app || true
             docker rm app || true
+            # Jalankan container baru dengan image versi terbaru
             docker run -d --name app -p 3000:3000 --restart always ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
-          EOF

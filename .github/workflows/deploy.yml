@@ -10,43 +10,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout kode dari repository
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. Login Docker Hub
+      # 2. Login ke Docker Hub menggunakan Secrets
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
 
-      # 2. Build & Push Image
+      # 3. Build dan Push Image ke Docker Hub
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
+          context: .
           push: true
-          tags: ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
+          # Pastikan 'playdeveloper' adalah username Docker Hub kamu
+          tags: playdeveloper/gonku.murahdev:latest
 
-      # 3. Install Cloudflare Tunnel Client di Runner
+      # 4. Install Cloudflare Tunnel Client di Runner GitHub Actions
       - name: Install Cloudflare
         run: |
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
+          # Verifikasi instalasi
+          which cloudflared
 
-      # 4. Deploy ke Server (Memperbaiki error Proxy Command)
+      # 5. Deploy ke Server melalui Cloudflare Tunnel
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          # Perbaikan: Gunakan perintah cloudflared di dalam proxy_command
-          # Jika 'proxy_command' tetap tidak terbaca, kita akan gunakan metode config bridge
+          # Menggunakan proxy_command agar bisa menembus tunnel
           proxy_command: /usr/local/bin/cloudflared access ssh --hostname %h
           script: |
+            # Tarik image terbaru
             docker pull playdeveloper/gonku.murahdev:latest
+            
+            # Hentikan dan hapus container lama jika ada
             docker stop app || true
             docker rm app || true
+            
+            # Jalankan container baru
             docker run -d \
               --name app \
               -p 3000:3000 \

@@ -33,14 +33,15 @@ jobs:
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
 
-      # 4. Deploy ke Server (Menggunakan konfigurasi SSH yang benar)
+      # 4. Deploy ke Server (Memperbaiki error Proxy Command)
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          # Gunakan format ini agar cloudflared bisa berjalan sebagai proxy
+          # Perbaikan: Gunakan perintah cloudflared di dalam proxy_command
+          # Jika 'proxy_command' tetap tidak terbaca, kita akan gunakan metode config bridge
           proxy_command: /usr/local/bin/cloudflared access ssh --hostname %h
           script: |
             docker pull playdeveloper/gonku.murahdev:latest

@@ -27,16 +27,17 @@ jobs:
         with:
           context: .
           push: true
+          # Pastikan rahasia DOCKER_USER sesuai dengan username Docker Hub kamu
           tags: ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
 
-      # 4. Install Cloudflare & Setup SSH Config
-      - name: Install Cloudflare and Setup SSH
+      # 4. Install Cloudflare & Setup SSH Config (SOLUSI UTAMA)
+      - name: Install Cloudflare and Setup SSH Bridge
         run: |
-          # Install cloudflared
+          # Install cloudflared di runner GitHub Actions [cite: 98]
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
           
-          # Buat direktori .ssh dan file config di runner
+          # Buat direktori .ssh dan file config di runner [cite: 96, 99]
           mkdir -p ~/.ssh
           echo "Host ${{ secrets.SSH_HOST }}" > ~/.ssh/config
           echo "  ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h" >> ~/.ssh/config
@@ -49,11 +50,16 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          # Kita tidak lagi memakai proxy_command di sini karena sudah ada di ~/.ssh/config
+          # Tidak perlu proxy_command di sini karena sudah dipaksa lewat ~/.ssh/config 
           script: |
+            # Tarik image terbaru dari Docker Hub
             docker pull ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
+            
+            # Hentikan dan hapus container lama jika ada
             docker stop app || true
             docker rm app || true
+            
+            # Jalankan container baru [cite: 92]
             docker run -d \
               --name app \
               -p 3000:3000 \

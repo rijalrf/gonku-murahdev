@@ -9,17 +9,17 @@ jobs:
     runs-on: ubuntu-latest # Menggunakan runner Ubuntu terbaru dari GitHub
     steps:
       - name: Checkout Code
-        [cite_start]uses: actions/checkout@v3 # Mengambil kode terbaru dari repository GitHub kamu [cite: 42]
+        [cite_start]uses: actions/checkout@v3 # Mengambil kode terbaru dari repository GitHub kamu
 
       # --- BAGIAN 1: BUILD & PUSH KE DOCKER HUB ---
       - name: Login Docker Hub
-        [cite_start]uses: docker/login-action@v2 # Action standar untuk login ke Docker Hub [cite: 53]
+        [cite_start]uses: docker/login-action@v2 # Action standar untuk login ke Docker Hub
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
 
       - name: Build and Push Docker Image
-        [cite_start]uses: docker/build-push-action@v4 # Membangun image dan mengirimnya ke Docker Hub [cite: 14, 53]
+        [cite_start]uses: docker/build-push-action@v4 # Membangun image dan mengirimnya ke Docker Hub
         with:
           push: true
           # Menggunakan tag 'latest' untuk image di Docker Hub
@@ -42,11 +42,11 @@ jobs:
 
       # --- BAGIAN 3: DEPLOY KE SERVER VIA SSH ---
       - name: Deploy to Server via SSH Tunnel
-        [cite_start]uses: appleboy/ssh-action@v1.0.3 # Masuk ke server untuk menjalankan perintah remote [cite: 15]
+        [cite_start]uses: appleboy/ssh-action@v1.0.3 # Masuk ke server untuk menjalankan perintah remote
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          [cite_start]key: ${{ secrets.SSH_KEY }} # Menggunakan Private Key SSH kamu [cite: 11]
+          [cite_start]key: ${{ secrets.SSH_KEY }} # Menggunakan Private Key SSH kamu
           script: |
             # 1. Menarik image terbaru yang baru saja di-push ke Docker Hub [cite: 6, 91]
             docker pull ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest

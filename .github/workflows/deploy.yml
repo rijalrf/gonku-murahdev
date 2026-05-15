@@ -36,11 +36,9 @@ jobs:
         run: |
           # Membuat folder .ssh jika belum ada
           mkdir -p ~/.ssh
-          # Menulis konfigurasi SSH agar domain SSH_HOST dipaksa menggunakan cloudflared [cite: 99, 117]
-          # --service-token-id & secret digunakan agar bisa login otomatis tanpa OTP email [cite: 300]
-          echo "Host ${{ secrets.SSH_HOST }}
-            ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CF_CLIENT_ID }} --service-token-secret ${{ secrets.CF_CLIENT_SECRET }}
-            StrictHostKeyChecking no" > ~/.ssh/config
+          echo "Host ${{ secrets.SSH_HOST }}" > ~/.ssh/config
+          echo "ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       # --- BAGIAN 3: DEPLOY KE SERVER VIA SSH ---
       - name: Deploy to Server via SSH Tunnel
@@ -56,5 +54,8 @@ jobs:
             docker stop app || true
             # 3. Menghapus container lama agar tidak bentrok [cite: 91]
             docker rm app || true
-            # 4. Menjalankan container baru dengan image terbaru di port 3000 [cite: 92]
-            docker run -d --name app -p 3000:3000 --restart always ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
+            docker run -d \
+              --name app \
+              -p 3000:3000 \
+              --restart always \
+              ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest

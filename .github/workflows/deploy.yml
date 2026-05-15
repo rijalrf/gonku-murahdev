@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Login ke Docker Hub menggunakan Secrets
+      # 2. Login ke Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -27,37 +27,35 @@ jobs:
         with:
           context: .
           push: true
-          # Pastikan 'playdeveloper' adalah username Docker Hub kamu
-          tags: playdeveloper/gonku.murahdev:latest
+          tags: ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
 
-      # 4. Install Cloudflare Tunnel Client di Runner GitHub Actions
-      - name: Install Cloudflare
+      # 4. Install Cloudflare & Setup SSH Config
+      - name: Install Cloudflare and Setup SSH
         run: |
+          # Install cloudflared
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
-          # Verifikasi instalasi
-          which cloudflared
+          
+          # Buat direktori .ssh dan file config di runner
+          mkdir -p ~/.ssh
+          echo "Host ${{ secrets.SSH_HOST }}" > ~/.ssh/config
+          echo "  ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
-      # 5. Deploy ke Server melalui Cloudflare Tunnel
+      # 5. Deploy ke Server (Sekarang akan otomatis menggunakan proxy dari config)
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          # Menggunakan proxy_command agar bisa menembus tunnel
-          proxy_command: /usr/local/bin/cloudflared access ssh --hostname %h
+          # Kita tidak lagi memakai proxy_command di sini karena sudah ada di ~/.ssh/config
           script: |
-            # Tarik image terbaru
-            docker pull playdeveloper/gonku.murahdev:latest
-            
-            # Hentikan dan hapus container lama jika ada
+            docker pull ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
             docker stop app || true
             docker rm app || true
-            
-            # Jalankan container baru
             docker run -d \
               --name app \
               -p 3000:3000 \
               --restart always \
-              playdeveloper/gonku.murahdev:latest
+              ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest

@@ -39,7 +39,7 @@ jobs:
           # Buat direktori .ssh dan file config di runner
           mkdir -p ~/.ssh
           echo "Host ${{ secrets.SSH_HOST }}" > ~/.ssh/config
-          echo "  ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h" >> ~/.ssh/config
+          echo "ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
 
       # 5. Deploy ke Server (Sekarang akan otomatis menggunakan proxy dari config)

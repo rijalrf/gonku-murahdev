@@ -1,61 +1,60 @@
 name: Auto Deploy to Server
-
 on:
   push:
     branches:
-      - main
+      - main # Menjalankan workflow otomatis setiap kali ada push ke branch main
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-latest # Menggunakan runner Ubuntu terbaru dari GitHub
     steps:
-      # 1. Checkout kode dari repository
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout Code
+        [cite_start]uses: actions/checkout@v3 # Mengambil kode terbaru dari repository GitHub kamu [cite: 42]
 
-      # 2. Login ke Docker Hub
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      # --- BAGIAN 1: BUILD & PUSH KE DOCKER HUB ---
+      - name: Login Docker Hub
+        [cite_start]uses: docker/login-action@v2 # Action standar untuk login ke Docker Hub [cite: 53]
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
 
-      # 3. Build dan Push Image ke Docker Hub
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
+        [cite_start]uses: docker/build-push-action@v4 # Membangun image dan mengirimnya ke Docker Hub [cite: 14, 53]
         with:
-          context: .
           push: true
-          tags: ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
+          # Menggunakan tag 'latest' untuk image di Docker Hub
+          tags: ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest 
 
-      # 4. Install Cloudflare & Setup SSH Config
-      - name: Install Cloudflare and Setup SSH
+      # --- BAGIAN 2: PERSIAPAN AKSES TUNNEL ---
+      - name: Install Cloudflared
         run: |
-          # Install cloudflared
+          # Mengunduh dan memasang cloudflared di runner GitHub agar bisa menembus tunnel [cite: 36, 51]
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
-          
-          # Buat direktori .ssh dan file config di runner
-          mkdir -p ~/.ssh
-          echo "Host ${{ secrets.SSH_HOST }}" > ~/.ssh/config
-          echo "ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h" >> ~/.ssh/config
-          chmod 600 ~/.ssh/config
 
-      # 5. Deploy ke Server (Sekarang akan otomatis menggunakan proxy dari config)
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Setup SSH Config Bridge
+        run: |
+          # Membuat folder .ssh jika belum ada
+          mkdir -p ~/.ssh
+          # Menulis konfigurasi SSH agar domain SSH_HOST dipaksa menggunakan cloudflared [cite: 99, 117]
+          # --service-token-id & secret digunakan agar bisa login otomatis tanpa OTP email [cite: 300]
+          echo "Host ${{ secrets.SSH_HOST }}
+            ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CF_CLIENT_ID }} --service-token-secret ${{ secrets.CF_CLIENT_SECRET }}
+            StrictHostKeyChecking no" > ~/.ssh/config
+
+      # --- BAGIAN 3: DEPLOY KE SERVER VIA SSH ---
+      - name: Deploy to Server via SSH Tunnel
+        [cite_start]uses: appleboy/ssh-action@v1.0.3 # Masuk ke server untuk menjalankan perintah remote [cite: 15]
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          # Kita tidak lagi memakai proxy_command di sini karena sudah ada di ~/.ssh/config
+          [cite_start]key: ${{ secrets.SSH_KEY }} # Menggunakan Private Key SSH kamu [cite: 11]
           script: |
+            # 1. Menarik image terbaru yang baru saja di-push ke Docker Hub [cite: 6, 91]
             docker pull ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
+            # 2. Menghentikan container lama jika sedang berjalan [cite: 91]
             docker stop app || true
+            # 3. Menghapus container lama agar tidak bentrok [cite: 91]
             docker rm app || true
-            docker run -d \
-              --name app \
-              -p 3000:3000 \
-              --restart always \
-              ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
+            # 4. Menjalankan container baru dengan image terbaru di port 3000 [cite: 92]
+            docker run -d --name app -p 3000:3000 --restart always ${{ secrets.DOCKER_USER }}/gonku.murahdev:latest
